@@ -14,7 +14,7 @@ interval = '1h'  # 1-hour candlesticks (since yfinance may not support 8-hour in
 last_alert_messages = {}
 
 # Function to get historical candlestick data
-def get_historical_data(symbol, interval, period='30d'):
+def get_historical_data(symbol, interval, period='1d'):
     ticker = yf.Ticker(symbol)
     df = ticker.history(interval=interval, period=period)
     df.reset_index(inplace=True)
