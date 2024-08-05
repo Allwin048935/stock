@@ -14,14 +14,18 @@ import matplotlib.dates as mdates
 last_alert_messages = {}
 
 # Function to get historical candlestick data
-def get_historical_data(symbol, interval, start_date=None):
+def get_historical_data(symbol, start_date=None):
     end_date = datetime.now()
     if start_date is None:
         start_date = end_date - timedelta(days=7)  # Default to the last 7 days
-    df = web.DataReader(symbol, 'yahoo', start_date, end_date)
-    df.reset_index(inplace=True)
-    df.rename(columns={'Date': 'Datetime'}, inplace=True)
-    return df
+    try:
+        df = web.DataReader(symbol, 'yahoo', start_date, end_date)
+        df.reset_index(inplace=True)
+        df.rename(columns={'Date': 'Datetime'}, inplace=True)
+        return df
+    except Exception as e:
+        print(f"Error fetching data for {symbol}: {e}")
+        return None
 
 # Function to calculate VWMA
 def calculate_vwma(df, period):
@@ -110,8 +114,10 @@ async def main():
     while True:
         for symbol in config.SELECTED_SYMBOLS:
             try:
-                historical_data = get_historical_data(symbol, '1h')
-                
+                historical_data = get_historical_data(symbol)
+                if historical_data is None:
+                    continue
+
                 # Ensure there is enough data to calculate the indicators
                 if len(historical_data) < 15:
                     print(f"Not enough data for {symbol} to calculate indicators.")
