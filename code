@@ -1,4 +1,3 @@
-import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
@@ -7,18 +6,21 @@ import nest_asyncio
 from telegram import Bot
 import config  # Import the config module
 import ta  # Import ta library
+import pandas_datareader.data as web
+from datetime import datetime, timedelta
 import matplotlib.dates as mdates
-
-interval = '1h'  # 1-hour candlesticks (since yfinance may not support 8-hour intervals)
 
 # Dictionary to store the last alert messages for each symbol
 last_alert_messages = {}
 
 # Function to get historical candlestick data
-def get_historical_data(symbol, interval, period='1d'):
-    ticker = yf.Ticker(symbol)
-    df = ticker.history(interval=interval, period=period)
+def get_historical_data(symbol, interval, start_date=None):
+    end_date = datetime.now()
+    if start_date is None:
+        start_date = end_date - timedelta(days=7)  # Default to the last 7 days
+    df = web.DataReader(symbol, 'yahoo', start_date, end_date)
     df.reset_index(inplace=True)
+    df.rename(columns={'Date': 'Datetime'}, inplace=True)
     return df
 
 # Function to calculate VWMA
@@ -108,7 +110,7 @@ async def main():
     while True:
         for symbol in config.SELECTED_SYMBOLS:
             try:
-                historical_data = get_historical_data(symbol, interval)
+                historical_data = get_historical_data(symbol, '1h')
                 
                 # Ensure there is enough data to calculate the indicators
                 if len(historical_data) < 15:
